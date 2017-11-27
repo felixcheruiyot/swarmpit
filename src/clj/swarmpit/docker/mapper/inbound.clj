@@ -1,6 +1,7 @@
 (ns swarmpit.docker.mapper.inbound
   "Map docker domain to swarmpit domain"
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [swarmpit.config :refer [config]]))
 
 (defn- as-megabytes
   [bytes]
@@ -253,6 +254,16 @@
     {:name (subs image-name 0 separator-pos)
      :tag  (subs image-name (inc separator-pos) length)}))
 
+(defn ->service-publish-urls
+  [ports]
+  (->> [(->> ports
+             (filter :hostPort)
+             (map #(str (config :domain) ":" (% :hostPort))))]
+       (merge)
+       (flatten)
+       (filter identity)
+       (vec)))
+
 (defn ->service
   [service tasks]
   (let [service-spec (:Spec service)
@@ -268,7 +279,8 @@
         image (get-in service-task-template [:ContainerSpec :Image])
         image-info (str/split image #"@")
         image-name (first image-info)
-        image-digest (second image-info)]
+        image-digest (second image-info)
+        ports (->service-ports service-spec)]
     (array-map
       :id service-id
       :version (get-in service [:Version :Index])
@@ -281,6 +293,7 @@
                           :imageId     (:swarmpit.service.repository.image.id service-labels)
                           :imageDigest image-digest})
       :serviceName service-name
+      :publishUrls (->service-publish-urls ports)
       :mode service-mode
       :stack (-> service-labels stack-label)
       :replicas replicas
@@ -292,7 +305,7 @@
                           (->service-info-status replicas-running replicas-no-shutdown))
                :update  (get-in service [:UpdateStatus :State])
                :message (get-in service [:UpdateStatus :Message])}
-      :ports (->service-ports service-spec)
+      :ports ports
       :mounts (->service-mounts service-spec)
       :secrets (->service-secrets service-spec)
       :variables (->service-variables service-spec)

@@ -5,13 +5,15 @@
 (def default {:docker-sock      "/var/run/docker.sock"
               :docker-api       "1.30"
               :db-url           "http://localhost:5984"
+              :domain           nil
               :password-hashing {:alg        :pbkdf2+sha512
                                  :iterations 200000}})
 
 (def environment
   (->> {:docker-sock (env :swarmpit-docker-sock)
         :docker-api  (env :swarmpit-docker-api)
-        :db-url      (env :swarmpit-db)}
+        :db-url      (env :swarmpit-db)
+        :domain      (env :swarmpit-domain)}
        (into {} (remove #(nil? (val %))))))
 
 (def ^:private dynamic (atom {}))
