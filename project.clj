@@ -78,7 +78,7 @@
                                :source-map-timestamp true
                                :parallel-build       true
                                :closure-defines      {"goog.DEBUG" false}
-                               :optimizations        :advanced
+                               :optimizations        :simple
                                :pretty-print         false}}]}
   :figwheel {:css-dirs       ["resources/public/css"]
              :ring-handler   repl.user/http-handler
